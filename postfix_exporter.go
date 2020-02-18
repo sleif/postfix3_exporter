@@ -420,6 +420,7 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.smtpdRejects.WithLabelValues(smtpdRejectsMatches[1]).Inc()
 			} else if smtpdSASLAuthenticationFailuresLine.MatchString(logMatches[3]) {
 				e.smtpdSASLAuthenticationFailures.Inc()
+				log.Printf("match smtpdSASLAuthenticationFailuresLine")
 			} else if smtpdTLSMatches := smtpdTLSLine.FindStringSubmatch(logMatches[3]); smtpdTLSMatches != nil {
 				e.smtpdTLSConnects.WithLabelValues(smtpdTLSMatches[1:]...).Inc()
 			} else {
