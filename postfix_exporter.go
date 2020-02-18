@@ -286,7 +286,7 @@ var (
 	smtpdProcessesSASLLine              = regexp.MustCompile(`: client=.*, sasl_username=(\S+)`)
 	smtpdRejectsLine                    = regexp.MustCompile(`^NOQUEUE: reject: RCPT from \S+: ([0-9]+) `)
 	smtpdLostConnectionLine             = regexp.MustCompile(`^lost connection after (\w+) from `)
-	smtpdSASLAuthenticationFailuresLine = regexp.MustCompile(`^warning: \S+: SASL \S+ authentication failed: `)
+	smtpdSASLAuthenticationFailuresLine = regexp.MustCompile(`warning: \S+: SASL \S+ authentication failed:`)
 	smtpdTLSLine                        = regexp.MustCompile(`^(\S+) TLS connection established from \S+: (\S+) with cipher (\S+) \((\d+)/(\d+) bits\)$`)
 )
 
