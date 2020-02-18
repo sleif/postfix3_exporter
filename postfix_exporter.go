@@ -277,7 +277,7 @@ func CollectShowqFromSocket(path string, ch chan<- prometheus.Metric) error {
 
 // Patterns for parsing log messages.
 var (
-	logLine                             = regexp.MustCompile(` ?postfix/(\w+)\[\d+\]: (.*)`)
+	logLine                             = regexp.MustCompile(` ?postfix/(\w+/)?(\w+)\[\d+\]: (.*)`)
 	lmtpPipeSMTPLine                    = regexp.MustCompile(`, relay=(\S+), .*, delays=([0-9\.]+)/([0-9\.]+)/([0-9\.]+)/([0-9\.]+), `)
 	qmgrInsertLine                      = regexp.MustCompile(`:.*, size=(\d+), nrcpt=(\d+) `)
 	smtpTLSLine                         = regexp.MustCompile(`^(\S+) TLS connection established to \S+: (\S+) with cipher (\S+) \((\d+)/(\d+) bits\)$`)
@@ -286,7 +286,7 @@ var (
 	smtpdProcessesSASLLine              = regexp.MustCompile(`: client=.*, sasl_username=(\S+)`)
 	smtpdRejectsLine                    = regexp.MustCompile(`^NOQUEUE: reject: RCPT from \S+: ([0-9]+) `)
 	smtpdLostConnectionLine             = regexp.MustCompile(`^lost connection after (\w+) from `)
-	smtpdSASLAuthenticationFailuresLine = regexp.MustCompile(`warning: \S+: SASL \S+ authentication failed:`)
+	smtpdSASLAuthenticationFailuresLine = regexp.MustCompile(`^warning: \S+: SASL \S+ authentication failed: `)
 	smtpdTLSLine                        = regexp.MustCompile(`^(\S+) TLS connection established from \S+: (\S+) with cipher (\S+) \((\d+)/(\d+) bits\)$`)
 )
 
@@ -295,12 +295,12 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 	// Strip off timestamp, hostname, etc.
 	if logMatches := logLine.FindStringSubmatch(line); logMatches != nil {
 		// Group patterns to check by Postfix service.
-		if logMatches[1] == "cleanup" {
-			if strings.Contains(logMatches[2], ": message-id=<") {
+		if logMatches[2] == "cleanup" {
+			if strings.Contains(logMatches[3], ": message-id=<") {
 				e.cleanupProcesses.Inc()
-			} else if strings.Contains(logMatches[2], ": reject: ") {
+			} else if strings.Contains(logMatches[3], ": reject: ") {
 				e.cleanupRejects.Inc()
-			} else if strings.Contains(logMatches[2], "message not accepted") {
+			} else if strings.Contains(logMatches[3], "message not accepted") {
 				e.cleanupNotAccepted.Inc()
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[1]).Inc()
@@ -403,27 +403,27 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[1]).Inc()
 			}
-		} else if logMatches[1] == "smtpd" {
-			if strings.HasPrefix(logMatches[2], "connect from ") {
+		} else if logMatches[2] == "smtpd" {
+			if strings.HasPrefix(logMatches[3], "connect from ") {
 				e.smtpdConnects.Inc()
-			} else if smtpdSASLAuthenticationFailuresLine.MatchString(logMatches[2]) {
-				e.smtpdSASLAuthenticationFailures.Inc()
-			} else if strings.HasPrefix(logMatches[2], "disconnect from ") {
+			} else if strings.HasPrefix(logMatches[3], "disconnect from ") {
 				e.smtpdDisconnects.Inc()
-			} else if smtpdFCrDNSErrorsLine.MatchString(logMatches[2]) {
+			} else if smtpdFCrDNSErrorsLine.MatchString(logMatches[3]) {
 				e.smtpdFCrDNSErrors.Inc()
-			} else if smtpdLostConnectionMatches := smtpdLostConnectionLine.FindStringSubmatch(logMatches[2]); smtpdLostConnectionMatches != nil {
+			} else if smtpdLostConnectionMatches := smtpdLostConnectionLine.FindStringSubmatch(logMatches[3]); smtpdLostConnectionMatches != nil {
 				e.smtpdLostConnections.WithLabelValues(smtpdLostConnectionMatches[1]).Inc()
-			} else if smtpdProcessesSASLMatches := smtpdProcessesSASLLine.FindStringSubmatch(logMatches[2]); smtpdProcessesSASLMatches != nil {
+			} else if smtpdProcessesSASLMatches := smtpdProcessesSASLLine.FindStringSubmatch(logMatches[3]); smtpdProcessesSASLMatches != nil {
 				e.smtpdProcesses.WithLabelValues(smtpdProcessesSASLMatches[1]).Inc()
-			} else if strings.Contains(logMatches[2], ": client=") {
+			} else if strings.Contains(logMatches[3], ": client=") {
 				e.smtpdProcesses.WithLabelValues("").Inc()
-			} else if smtpdRejectsMatches := smtpdRejectsLine.FindStringSubmatch(logMatches[2]); smtpdRejectsMatches != nil {
+			} else if smtpdRejectsMatches := smtpdRejectsLine.FindStringSubmatch(logMatches[3]); smtpdRejectsMatches != nil {
 				e.smtpdRejects.WithLabelValues(smtpdRejectsMatches[1]).Inc()
-			} else if smtpdTLSMatches := smtpdTLSLine.FindStringSubmatch(logMatches[2]); smtpdTLSMatches != nil {
+			} else if smtpdSASLAuthenticationFailuresLine.MatchString(logMatches[3]) {
+				e.smtpdSASLAuthenticationFailures.Inc()
+			} else if smtpdTLSMatches := smtpdTLSLine.FindStringSubmatch(logMatches[3]); smtpdTLSMatches != nil {
 				e.smtpdTLSConnects.WithLabelValues(smtpdTLSMatches[1:]...).Inc()
 			} else {
-				e.unsupportedLogEntries.WithLabelValues(logMatches[1]).Inc()
+				e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
 			}
 		} else {
 			// Unknown Postfix service.
