@@ -1,4 +1,4 @@
-# Prometheus Postfix exporter
+# Prometheus Postfix 3 exporter
 
 This repository provides code for a Prometheus metrics exporter
 for [the Postfix mail server](http://www.postfix.org/). This exporter
