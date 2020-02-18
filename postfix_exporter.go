@@ -406,6 +406,8 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 		} else if logMatches[1] == "smtpd" {
 			if strings.HasPrefix(logMatches[2], "connect from ") {
 				e.smtpdConnects.Inc()
+			} else if smtpdSASLAuthenticationFailuresLine.MatchString(logMatches[2]) {
+				e.smtpdSASLAuthenticationFailures.Inc()
 			} else if strings.HasPrefix(logMatches[2], "disconnect from ") {
 				e.smtpdDisconnects.Inc()
 			} else if smtpdFCrDNSErrorsLine.MatchString(logMatches[2]) {
@@ -418,8 +420,6 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.smtpdProcesses.WithLabelValues("").Inc()
 			} else if smtpdRejectsMatches := smtpdRejectsLine.FindStringSubmatch(logMatches[2]); smtpdRejectsMatches != nil {
 				e.smtpdRejects.WithLabelValues(smtpdRejectsMatches[1]).Inc()
-			} else if smtpdSASLAuthenticationFailuresLine.MatchString(logMatches[2]) {
-				e.smtpdSASLAuthenticationFailures.Inc()
 			} else if smtpdTLSMatches := smtpdTLSLine.FindStringSubmatch(logMatches[2]); smtpdTLSMatches != nil {
 				e.smtpdTLSConnects.WithLabelValues(smtpdTLSMatches[1:]...).Inc()
 			} else {
