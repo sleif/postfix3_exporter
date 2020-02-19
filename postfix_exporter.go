@@ -286,7 +286,7 @@ var (
 	smtpdProcessesSASLLine              = regexp.MustCompile(`: client=.*, sasl_username=(\S+)`)
 	smtpdRejectsLine                    = regexp.MustCompile(`^NOQUEUE: reject: RCPT from \S+: ([0-9]+) `)
 	smtpdLostConnectionLine             = regexp.MustCompile(`^lost connection after (\w+) from `)
-	smtpdSASLAuthenticationFailuresLine = regexp.MustCompile(`^warning: \S+: SASL \S+ authentication failed: `)
+	smtpdSASLAuthenticationFailuresLine = regexp.MustCompile(`^warning: \S+: SASL \S+ authentication failed:`)
 	smtpdTLSLine                        = regexp.MustCompile(`^(\S+) TLS connection established from \S+: (\S+) with cipher (\S+) \((\d+)/(\d+) bits\)$`)
 )
 
@@ -309,6 +309,7 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.cleanupNotAccepted.Inc()
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
+				log.Printf("logmatch0: %s",  logMatches[0])
 			}
 		} else if logMatches[2] == "lmtp" {
 			if lmtpMatches := lmtpPipeSMTPLine.FindStringSubmatch(logMatches[3]); lmtpMatches != nil {
@@ -334,6 +335,7 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.lmtpDelays.WithLabelValues("transmission").Observe(xdelay)
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
+				log.Printf("logmatch0: %s",  logMatches[0])
 			}
 		} else if logMatches[2] == "pipe" {
 			if pipeMatches := lmtpPipeSMTPLine.FindStringSubmatch(logMatches[3]); pipeMatches != nil {
@@ -359,6 +361,7 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.pipeDelays.WithLabelValues(pipeMatches[1], "transmission").Observe(xdelay)
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
+				log.Printf("logmatch0: %s",  logMatches[0])
 			}
 		} else if logMatches[2] == "qmgr" {
 			if qmgrInsertMatches := qmgrInsertLine.FindStringSubmatch(logMatches[3]); qmgrInsertMatches != nil {
@@ -376,6 +379,7 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.qmgrRemoves.Inc()
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
+				log.Printf("logmatch0: %s",  logMatches[0])
 			}
 		} else if logMatches[2] == "smtp" {
 			if smtpMatches := lmtpPipeSMTPLine.FindStringSubmatch(logMatches[3]); smtpMatches != nil {
@@ -407,6 +411,7 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.smtpTLSConnects.WithLabelValues(smtpTLSMatches[1:]...).Inc()
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
+				log.Printf("logmatch0: %s",  logMatches[0])
 			}
 		} else if logMatches[2] == "smtpd" {
 			if strings.HasPrefix(logMatches[3], "connect from ") {
@@ -430,10 +435,12 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 				e.smtpdTLSConnects.WithLabelValues(smtpdTLSMatches[1:]...).Inc()
 			} else {
 				e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
+				log.Printf("logmatch0: %s",  logMatches[0])
 			}
 		} else {
 			// Unknown Postfix service.
 			e.unsupportedLogEntries.WithLabelValues(logMatches[2]).Inc()
+			log.Printf("logmatch0: %s",  logMatches[0])
 		}
 	} else {
 		// Unknown log entry format.
@@ -462,6 +469,7 @@ func NewPostfixExporter(showqPath string, logfilePath string, journal *Journal) 
 			ReOpen:    true, // reopen the file if it's rotated
 			MustExist: true, // fail immediately if the file is missing or has incorrect permissions
 			Follow:    true, // run in follow mode
+			Location:  &SeekInfo{0, os.SEEK_END}, // seek to end of file
 		})
 		if err != nil {
 			return nil, err
