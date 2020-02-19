@@ -292,7 +292,7 @@ var (
 
 // CollectFromLogline collects metrict from a Postfix log line.
 func (e *PostfixExporter) CollectFromLogline(line string) {
-	log.Printf("line: %s",  line)
+	// log.Printf("line: %s",  line)
 	// Strip off timestamp, hostname, etc.
 	if logMatches := logLine.FindStringSubmatch(line); logMatches != nil {
 		// Group patterns to check by Postfix service.
