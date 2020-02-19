@@ -296,8 +296,8 @@ func (e *PostfixExporter) CollectFromLogline(line string) {
 	// Strip off timestamp, hostname, etc.
 	if logMatches := logLine.FindStringSubmatch(line); logMatches != nil {
 		// Group patterns to check by Postfix service.
-		log.Printf("logmatch0: %s",  logMatches[0])
-		log.Printf("logmatch1: %s",  logMatches[1])
+		// log.Printf("logmatch0: %s",  logMatches[0])
+		// log.Printf("logmatch1: %s",  logMatches[1])
 		log.Printf("logmatch2: %s",  logMatches[2])
 		log.Printf("logmatch3: %s",  logMatches[3])
 		if logMatches[2] == "cleanup" {
