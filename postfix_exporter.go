@@ -469,7 +469,7 @@ func NewPostfixExporter(showqPath string, logfilePath string, journal *Journal) 
 			ReOpen:    true, // reopen the file if it's rotated
 			MustExist: true, // fail immediately if the file is missing or has incorrect permissions
 			Follow:    true, // run in follow mode
-			Location:  &SeekInfo{0, os.SEEK_END}, // seek to end of file
+			Location:  &tail.SeekInfo{0, os.SEEK_END}, // seek to end of file
 		})
 		if err != nil {
 			return nil, err
